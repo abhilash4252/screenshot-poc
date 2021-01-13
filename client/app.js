@@ -1,10 +1,22 @@
-console.log("hi");
+console.log("Widget Loaded");
+
+/*
+TODO
+1. Isolate Styles
+2. Mock getting config from API (spoof authentication w/ error)
+3. Refactor Code
+4. Streamline script loading
+*/
 
 const FeedbackWidget = Widget();
 
 function Widget() {
   let canvas;
   let primaryColor;
+  let feedbackLabelText;
+  let feedbackButtonText;
+  let feedbackPlaceholderText;
+
   const feedbackButton = document.createElement("button");
 
   const _createStyledButton = ({ text, onclick }) => {
@@ -21,6 +33,11 @@ function Widget() {
   const init = (config) => {
     // REFACTOR
     primaryColor = config?.global?.primaryColor || "#3973E6";
+    feedbackLabelText = config?.feedbackForm?.labelText || "Add a comment";
+    feedbackButtonText = config?.feedbackForm?.buttonText || "Submit";
+    feedbackPlaceholderText =
+      config?.feedbackForm?.placeholderText || "Your Feedback";
+
     feedbackButton.setAttribute("data-html2canvas-ignore", null);
     feedbackButton.innerText = config?.feedbackButton?.text || "Feedback";
     feedbackButton.style.backgroundColor =
@@ -147,7 +164,6 @@ function Widget() {
       var image = new Image();
       image.src = base64image;
       var w = window.open("");
-      w.document.body.style.margin = "0";
       w.document.write(image.outerHTML);
       closeWidget();
     });
@@ -214,6 +230,7 @@ function Widget() {
     feedbackContainer.style.bottom = "0";
     feedbackContainer.style.boxShadow = "0 0 12px rgba(0,0,0,0.2)";
     feedbackContainer.style.zIndex = "1000000";
+    feedbackContainer.style.backgroundColor = "white";
 
     const inputContainer = document.createElement("div");
     inputContainer.style.display = "flex";
@@ -229,9 +246,9 @@ function Widget() {
     const br2 = document.createElement("br");
 
     const commentLabel = document.createElement("label");
-    commentLabel.innerText = "Add a comment";
+    commentLabel.innerText = feedbackLabelText;
     const commentTextArea = document.createElement("textarea");
-    commentTextArea.placeholder = "Your Feedback";
+    commentTextArea.placeholder = feedbackPlaceholderText;
 
     const assigneeLabel = document.createElement("label");
     assigneeLabel.innerText = "Assignee";
@@ -245,7 +262,7 @@ function Widget() {
     tncInput.type = "text";
 
     const submitFeedbackButton = document.createElement("button");
-    submitFeedbackButton.innerText = "Give Feedback";
+    submitFeedbackButton.innerText = feedbackButtonText;
     submitFeedbackButton.style.width = "100%";
     submitFeedbackButton.style.backgroundColor = primaryColor;
     submitFeedbackButton.style.color = "white";
@@ -253,6 +270,7 @@ function Widget() {
     submitFeedbackButton.style.fontSize = "1rem";
     submitFeedbackButton.style.fontWeight = "600";
     submitFeedbackButton.style.cursor = "pointer";
+    submitFeedbackButton.onclick = takeScreenShot;
 
     const inputElements = [
       commentLabel,
