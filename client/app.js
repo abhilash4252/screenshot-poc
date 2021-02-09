@@ -1,5 +1,4 @@
 const loadEvent = new Event("FeedbackWidgetLoaded");
-console.log("Widget Loaded");
 const FeedbackWidget = Widget();
 
 function Widget() {
@@ -10,27 +9,47 @@ function Widget() {
   let feedbackLabelText;
   let feedbackFormButtonText;
   let feedbackPlaceholderText;
+  let outro_text;
+  let api_key;
 
   const feedbackButton = document.createElement("button");
 
-  const _createStyledButton = ({ text, onclick, icon }) => {
+  const createStyledButton = ({ text, id = "", onclick, icon, style }) => {
     const button = document.createElement("button");
-    button.style.border = "none";
-    button.style.color = "white";
-    button.style.padding = "0.5rem 0.8rem";
-    button.style.cursor = "pointer";
-    button.style.backgroundColor = primaryColor;
-    button.style.backgroundImage = `url("${icon}")`;
-    button.style.backgroundRepeat = "no-repeat";
-    button.style.backgroundPosition = "center";
-    button.style.backgroundSize = "18px 18px";
-    button.style.padding = "1rem";
-    button.style.paddingTop = "1.2rem";
-    button.style.borderRadius = "20px";
-    button.style.margin = "0.5rem";
+    button.id = id;
+    const buttonStyle = button.style;
+    const buttonStyles = {
+      border: "none",
+      color: "white",
+      padding: "0.5rem 0.8rem",
+      cursor: "pointer",
+      backgroundColor: primaryColor,
+      backgroundImage: `url("${icon}")`,
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center",
+      backgroundSize: "18px 18px",
+      padding: "1rem",
+      paddingTop: "1.2rem",
+      borderRadius: "20px",
+      margin: "0.5rem",
+    };
+    Object.assign(buttonStyle, style ? style : buttonStyles);
+
     button.onclick = onclick;
-    //button.innerText = text
+    text && (button.innerText = text);
     return button;
+  };
+
+  const createElement = (elem, params = {}) => {
+    const { text = "", id = "", style = {}, children = [] } = params;
+    const element = document.createElement(elem);
+    element.id = id;
+    const elementStyle = element.style;
+    Object.assign(elementStyle, style);
+    children.length && children.forEach((child) => element.appendChild(child));
+    text && (element.innerHTML = text);
+
+    return element;
   };
 
   const init = async ({ apiKey }) => {
@@ -47,66 +66,85 @@ function Widget() {
     feedbackFormButtonText = config?.feedbackForm?.buttonText || "Submit";
     feedbackPlaceholderText =
       config?.feedbackForm?.placeholderText || "Your Feedback";
+    outro_text = config?.outro.text || "Thanks for your feedback";
   };
 
-  const authenticate = (apiKey) => {
+  const authenticate = async (apiKey) => {
     // TODO : Use a network call to get config
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        if (!apiKey) throw Error("API Key Missing");
-        if (apiKey !== "thisisanapikeyverysecure")
-          throw Error("Invalid API Key");
-        resolve({
-          global: {
-            primaryColor: "#7D61DC",
-          },
-          feedbackButton: {
-            text: "Give Feedback",
-          },
-          feedbackForm: {
-            labelText: "Label Text",
-            placeholderText: "Placeholder",
-            buttonText: "Give Feedback",
-            headline: "Say something",
-          },
-        });
-      }, 3000);
+    var myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    var raw = JSON.stringify({
+      key: apiKey,
     });
+
+    var requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+
+    const request = await fetch(
+      "http://localhost:8080/api/v1/client/init",
+      requestOptions
+    );
+    const response = await request.json();
+    const { config } = response;
+    api_key = apiKey;
+    return {
+      global: {
+        primaryColor: config.button_bg_color,
+      },
+      feedbackButton: {
+        text: config.button_label,
+      },
+      feedbackForm: {
+        labelText: config.input_placeholder,
+        placeholderText: config.input_label,
+        buttonText: config.submit_button_label,
+        headline: config.heading,
+      },
+      outro: {
+        text: config.outro_text,
+      },
+    };
   };
 
   const renderFeedbackButton = () => {
     feedbackButton.setAttribute("data-html2canvas-ignore", null);
     feedbackButton.innerText = feedbackButtonText;
-    feedbackButton.style.backgroundColor = primaryColor;
-    feedbackButton.style.position = "fixed";
-    feedbackButton.style.bottom = "0px";
-    feedbackButton.style.right = "30px";
-    feedbackButton.style.color = "white";
-    feedbackButton.style.padding = "0.8rem 1.5rem";
-    feedbackButton.style.fontSize = "1rem";
-    feedbackButton.style.fontWeight = "600";
-    feedbackButton.style.borderTopLeftRadius = "10px";
-    feedbackButton.style.borderTopRightRadius = "10px";
-    feedbackButton.style.border = "none";
-    feedbackButton.style.boxShadow = "0px -4px 12px rgba(0, 0, 0, 0.3)";
-    feedbackButton.style.zIndex = "10000000";
-    feedbackButton.style.cursor = "pointer";
+    const buttonStyles = feedbackButton.style;
+    const styles = {
+      backgroundColor: primaryColor,
+      position: "fixed",
+      bottom: "0px",
+      right: "30px",
+      color: "white",
+      padding: "0.8rem 1.5rem",
+      fontSize: "1rem",
+      fontWeight: "600",
+      borderTopLeftRadius: "10px",
+      borderTopRightRadius: "10px",
+      border: "none",
+      boxShadow: "0px -4px 12px rgba(0, 0, 0, 0.3)",
+      zIndex: "10000000",
+      cursor: "pointer",
+    };
+    Object.assign(buttonStyles, styles);
 
     feedbackButton.onclick = function () {
       openWidget();
       showFeedbackDialog();
-      feedbackButton.style.display = "none";
+      Object.assign(buttonStyles, { display: "none" });
+      //feedbackButton.style.display = "none";
     };
 
     document.body.appendChild(feedbackButton);
   };
 
   const openWidget = () => {
-    // Add Overlay
-    addOverlay();
-
-    // Initialize Canvas with FabricJS
-    console.log("Initializing Canvas");
+    renderOverlay();
     canvas = new fabric.Canvas(document.getElementById("scribble-canvas"), {
       width: document.documentElement.clientWidth,
       height: document.documentElement.clientHeight,
@@ -189,7 +227,6 @@ function Widget() {
   };
 
   const takeScreenShot = () => {
-    console.log("Taking Screenshot");
     html2canvas(document.body, {
       height: window.innerHeight,
       width: window.innerWidth,
@@ -199,147 +236,241 @@ function Widget() {
       var base64image = canvas.toDataURL();
       var image = new Image();
       image.src = base64image;
-      var w = window.open("");
-      w.document.write(image.outerHTML);
-      closeWidget();
+      var myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      fetch("http://localhost:8000/screenshot", {
+        method: "POST",
+        headers: myHeaders,
+        body: JSON.stringify({ imageData: base64image }),
+        redirect: "follow",
+      }).then(async (res) => {
+        const result = await res.json();
+        console.log(result);
+        var raw = JSON.stringify({
+          key: api_key,
+          feedback: {
+            image_url: result.image_url,
+            description: document.getElementById("commentTextArea").value,
+            browser_info: {
+              name: "chrome",
+              version: "10.3",
+            },
+          },
+        });
+
+        var requestOptions = {
+          method: "POST",
+          headers: myHeaders,
+          body: raw,
+          redirect: "follow",
+        };
+        const smb = document.getElementById("submitFeedbackButton");
+        smb.disabled = true;
+        fetch(
+          "http://localhost:8080/api/v1/client/submit_feedback",
+          requestOptions
+        )
+          .then((res) => {
+            smb.disabled = false;
+            showOutro();
+            setTimeout(() => removeOutro(), 3000);
+            closeWidget();
+          })
+          .catch((err) => {
+            smb.disabled = false;
+            console.log(err);
+          });
+      });
     });
   };
 
-  function addOverlay() {
-    console.log("Adding Overlay");
-    // Create Container for Canvas
-    const container = document.createElement("div");
-    container.style.all = "unset";
-    container.id = "widget-container";
-    container.style.position = "absolute";
-    container.style.top = window.pageYOffset.toString() + "px";
-    container.style.left = "0";
-    container.style.zIndex = "100000";
-    container.style.height = "100vh";
-    container.style.width = "100vw";
-    container.style.boxSizing = "border-box";
-    container.style.border = `6px solid ${primaryColor}`;
-    container.style.fontFamily = "Verdana, sans-serif";
-
-    // Add Controls
-    const controlsContainer = document.createElement("div");
+  function renderOverlay() {
+    const controlsContainer = createElement("div", {
+      style: {
+        position: "absolute",
+        zIndex: "1000001",
+        display: "flex",
+        flexDirection: "column",
+      },
+      children: [
+        createStyledButton({
+          onclick: enableScribble,
+          icon: "https://www.svgrepo.com/show/8890/pen.svg",
+        }),
+        createStyledButton({
+          onclick: enableRectangleMode,
+          icon: "https://www.svgrepo.com/show/189147/marquee.svg",
+        }),
+        createStyledButton({
+          onclick: closeWidget,
+          icon: "https://www.svgrepo.com/show/305186/close.svg",
+        }),
+      ],
+    });
     controlsContainer.setAttribute("data-html2canvas-ignore", null);
-    controlsContainer.style.position = "absolute";
-    controlsContainer.style.zIndex = "1000001";
-    controlsContainer.style.display = "flex";
-    controlsContainer.style.flexDirection = "column";
 
-    controlsContainer.appendChild(
-      _createStyledButton({
-        text: "Pen",
-        onclick: enableScribble,
-        icon: "https://www.svgrepo.com/show/8890/pen.svg",
-      })
-    );
-    controlsContainer.appendChild(
-      _createStyledButton({
-        text: "Rectangle",
-        onclick: enableRectangleMode,
-        icon: "https://www.svgrepo.com/show/189147/marquee.svg",
-      })
-    );
-    controlsContainer.appendChild(
-      _createStyledButton({
-        text: "close",
-        onclick: closeWidget,
-        icon: "https://www.svgrepo.com/show/305186/close.svg",
-      })
-    );
+    const canvas = createElement("canvas", {
+      id: "scribble-canvas",
+      style: {
+        width: "100%",
+        height: "100%",
+      },
+    });
 
-    container.appendChild(controlsContainer);
+    const container = createElement("div", {
+      id: "widget-container",
+      style: {
+        all: "unset",
+        position: "absolute",
+        top: `${window.pageYOffset.toString()}px`,
+        left: "0",
+        zIndex: "100000",
+        height: "100vh",
+        width: "100vw",
+        boxSizing: "border-box",
+        border: `6px solid ${primaryColor}`,
+        fontFamily: "Verdana, sans-serif !important",
+      },
+      children: [controlsContainer, canvas],
+    });
 
-    // Create Canvas
-    const canvas = document.createElement("canvas");
-    canvas.id = "scribble-canvas";
-    canvas.style.width = "100%";
-    canvas.style.height = "100%";
-
-    // Add Canvas to Container
-    container.appendChild(canvas);
-
-    // Add Container to Body
     document.body.appendChild(container);
-
-    // Prevent Body From Scrolling
     document.body.style.overflow = "hidden";
   }
 
   const showFeedbackDialog = () => {
-    const feedbackContainer = document.createElement("div");
-    feedbackContainer.setAttribute("data-html2canvas-ignore", null);
-    feedbackContainer.style.position = "absolute";
-    feedbackContainer.style.right = "0";
-    feedbackContainer.style.bottom = "0";
-    feedbackContainer.style.boxShadow = "0 0 12px rgba(0,0,0,0.2)";
-    feedbackContainer.style.zIndex = "1000000";
-    feedbackContainer.style.backgroundColor = "white";
+    const headline = createElement("h3", {
+      text: feedbackHeadline,
+      style: {
+        textAlign: "center",
+        margin: "8px 0px",
+      },
+    });
 
-    const inputContainer = document.createElement("div");
-    inputContainer.style.display = "flex";
-    inputContainer.style.flexDirection = "column";
-    inputContainer.style.padding = "1rem";
+    const hr = createElement("hr");
 
-    const headline = document.createElement("h3");
-    headline.innerText = feedbackHeadline;
-    headline.style.textAlign = "center";
-    const hr = document.createElement("hr");
+    const commentLabel = createElement("label", {
+      text: feedbackLabelText,
+      style: {
+        fontSize: "0.8rem",
+      },
+    });
 
-    const br = document.createElement("br");
-    const br2 = document.createElement("br");
-
-    const commentLabel = document.createElement("label");
-    commentLabel.innerText = feedbackLabelText;
-    commentLabel.style.fontSize = "0.8rem";
-    const commentTextArea = document.createElement("textarea");
+    const commentTextArea = createElement("textarea", {
+      id: "commentTextArea",
+      style: {
+        padding: "0.5rem",
+        margin: "0.5rem 0rem",
+        fontSize: "0.8rem",
+        fontFamily: "Verdana, sans-serif !important",
+      },
+    });
     commentTextArea.placeholder = feedbackPlaceholderText;
-    commentTextArea.style.padding = "0.5rem";
-    commentTextArea.style.margin = "0.5rem 0";
-    commentTextArea.style.fontSize = "0.8rem";
-    commentTextArea.style.fontFamily = "Verdana, sans-serif";
 
-    const assigneeLabel = document.createElement("label");
-    assigneeLabel.innerText = "Assignee";
-    const assigneeInput = document.createElement("input");
-    assigneeInput.type = "text";
-    assigneeInput.placeholder = "Select Assignee";
+    const submitFeedbackButton = createStyledButton({
+      id: "submitFeedbackButton",
+      text: feedbackFormButtonText,
+      style: {
+        width: "100%",
+        backgroundColor: primaryColor,
+        color: "white",
+        padding: "0.8rem 1rem",
+        fontSize: "1rem",
+        fontWeight: "600",
+        cursor: "pointer",
+        border: "none",
+      },
+      onclick: takeScreenShot,
+    });
 
-    const tncLabel = document.createElement("label");
-    tncLabel.innerText = "I accept the terms and conditions";
-    const tncInput = document.createElement("input");
-    tncInput.type = "text";
+    const inputContainer = createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        padding: "1rem",
+      },
+      children: [commentLabel, commentTextArea],
+    });
 
-    const submitFeedbackButton = document.createElement("button");
-    submitFeedbackButton.innerText = feedbackFormButtonText;
-    submitFeedbackButton.style.width = "100%";
-    submitFeedbackButton.style.backgroundColor = primaryColor;
-    submitFeedbackButton.style.color = "white";
-    submitFeedbackButton.style.padding = "0.8rem 1.5rem";
-    submitFeedbackButton.style.fontSize = "1rem";
-    submitFeedbackButton.style.fontWeight = "600";
-    submitFeedbackButton.style.cursor = "pointer";
-    submitFeedbackButton.style.border = "none";
-    submitFeedbackButton.onclick = takeScreenShot;
-
-    const inputElements = [
-      commentLabel,
-      commentTextArea,
-      /* br,
-      assigneeLabel,
-      assigneeInput,
-      br2,
-      tncLabel,
-      tncInput, */
-    ];
-    const elements = [headline, hr, inputContainer, submitFeedbackButton];
-    inputElements.forEach((element) => inputContainer.appendChild(element));
-    elements.forEach((element) => feedbackContainer.appendChild(element));
+    const feedbackContainer = createElement("div", {
+      style: {
+        position: "absolute",
+        right: "0",
+        bottom: "0",
+        boxShadow: "0 0 12px rgba(0,0,0,0.2)",
+        zIndex: "1000000",
+        backgroundColor: "white",
+      },
+      children: [headline, hr, inputContainer, submitFeedbackButton],
+    });
+    feedbackContainer.setAttribute("data-html2canvas-ignore", null);
 
     document.getElementById("widget-container").appendChild(feedbackContainer);
+  };
+
+  const showOutro = () => {
+    const outroText = createElement("div", {
+      text: outro_text,
+      style: {
+        fontFamily: "Verdana, sans-serif",
+        fontSize: "1rem",
+        wordSpacing: "-1px",
+      },
+    });
+
+    const poweredByText = createElement("a", {
+      text: "powered by - feedback.easy",
+      style: {
+        marginTop: "1rem",
+        fontSize: "0.7rem",
+        color: "silver",
+      },
+    });
+    poweredByText.href = "https://feedback.easy.xyz";
+    poweredByText.target = "_blank";
+
+    const outroImage = createElement("img", {
+      style: {
+        width: "128px",
+        margin: "1rem",
+      },
+    });
+    outroImage.src = "https://www.svgrepo.com/show/167754/checked.svg";
+
+    const outroDialog = createElement("div", {
+      style: {
+        padding: "1rem 2rem",
+        backgroundColor: "white",
+        textAlign: "center",
+        borderRadius: "5px",
+        boxShadow: "0 0 8px 4px rgba(0,0,0,0.05)",
+      },
+      children: [outroImage, outroText, poweredByText],
+    });
+
+    const outroContainer = createElement("div", {
+      id: "outro-container",
+      style: {
+        position: "absolute",
+        top: "0",
+        left: "0",
+        width: "100vw",
+        height: "100vh",
+        backgroundColor: "rgba(0,0,0,0.25)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: "10000001",
+      },
+      children: [outroDialog],
+    });
+
+    document.body.appendChild(outroContainer);
+  };
+
+  const removeOutro = () => {
+    const outro = document.getElementById("outro-container");
+    outro.parentNode.removeChild(outro);
   };
 
   return {

@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-  <head>
-    <!-- <script src="./html2canvas.js"></script>
-    <script src="./fabric.js"></script> -->
-    <!-- <script defer src="https://feedback.fish/ff.js?pid=cb52a27898c4bf"></script> -->
-  </head>
-  <body>
-    Hello World
-    <div>
+
+<head>
+
+</head>
+
+<body>
+  Hello World
+  <div>
     <p style="overflow:auto; width:250px; height: 180px;box-shadow: 0 0 8px 16px;">
       Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
       eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
@@ -17,16 +17,29 @@
       culpa qui officia deserunt mollit anim id est laborum.
     </p>
   </div>
-  <img src="https://www.svgrepo.com/show/314938/calendar.svg" style="box-shadow: 0 0 8px 16px; zoom:2"/>
+  <img src="https://www.svgrepo.com/show/314938/calendar.svg" style="box-shadow: 0 0 8px 16px; zoom:2" />
   <svg height="100" width="100">
-    <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />  
-  </svg> 
+    <circle cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />
+  </svg>
   <img src="https://culture.easy.xyz/wp-content/uploads/sites/2/2020/10/Employee-Reviews.png" />
-  <div style="background-image: url('https://culture.easy.xyz/wp-content/uploads/sites/2/2020/10/Employee-Reviews.png'); background-repeat: no-repeat; height: 700px">
+  <div
+    style="background-image: url('https://culture.easy.xyz/wp-content/uploads/sites/2/2020/10/Employee-Reviews.png'); background-repeat: no-repeat; height: 700px">
   </div>
 
-    <iframe class="elementor-video-iframe" allowfullscreen title="vimeo Video Player" src="https://player.vimeo.com/video/486355266?autoplay=1&amp;color&amp;autopause=0&amp;loop=0&amp;muted=0&amp;title=1&amp;portrait=1&amp;byline=1#t="></iframe>		</div>
-			
-    <!-- <script src="./app.js"></script> -->
-  </body>
+  <iframe class="elementor-video-iframe" allowfullscreen title="vimeo Video Player"
+    src="https://player.vimeo.com/video/486355266?autoplay=1&amp;color&amp;autopause=0&amp;loop=0&amp;muted=0&amp;title=1&amp;portrait=1&amp;byline=1#t="></iframe>
+  </div>
+
+
+  <script>
+    const script = document.createElement("script");
+    document.body.appendChild(script);
+    script.src = "http://localhost:5501/snippet.js";
+    script.defer = 1
+    window.addEventListener("FeedbackWidgetLoaded", function () {
+      FeedbackWidget.init({ apiKey: "MLo2--JVxGHs6g/7ymhFKI--t3qQ5bzSGqN3a4NG0FVfQQ==" });
+    });
+  </script>
+</body>
+
 </html>

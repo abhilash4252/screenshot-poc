@@ -17,7 +17,7 @@ scripts.forEach((script) => document.body.appendChild(script));
 
 /* const script = document.createElement("script");
 document.body.appendChild(script);
-script.src = "http://localhost:5501/snippet.js";
+script.src = "http://localhost:5501/load.js";
 script.defer = 1
 window.addEventListener("FeedbackWidgetLoaded", function () {
   FeedbackWidget.init({ apiKey: "thisisanapikeyverysecure" });
